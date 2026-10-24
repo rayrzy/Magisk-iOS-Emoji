@@ -16,25 +16,25 @@ ui_print "*************************************"
 ui_print "*          iOS Emoji 26.4           *"
 ui_print "*************************************"
 
-# Official KernelSU 3.x (and forks that follow it, e.g. ReSukiSU) mount a
-# module's /system files only when a metamodule is installed. Without one this
-# module cannot replace the system emoji font, so refuse to install instead of
-# reporting a success that changes nothing.
+# KernelSU 3.x and the forks that follow it (current KernelSU-Next, BakaSU /
+# ReSukiSU) mount a module's /system files only when a metamodule is
+# installed. Without one this module cannot replace the system emoji font, so
+# refuse to install instead of reporting a success that changes nothing.
 #  - Magisk and APatch are not affected (KSU is not "true" on them).
-#  - KernelSU-Next sets KSU_NEXT and ships built-in mounting: not affected.
-#  - A fork we cannot identify (e.g. SukiSU-Ultra) can skip this check by
-#    creating the file /data/adb/ios_emoji_skip_metamodule_check first.
+#  - Forks or older builds with built-in mounting (e.g. SukiSU-Ultra, older
+#    KernelSU-Next) cannot be told apart from the script, so they can skip this
+#    check by creating /data/adb/ios_emoji_skip_metamodule_check first.
 has_metamodule() {
     [ -e /data/adb/metamodule ] && return 0
     grep -qs '^metamodule=1' /data/adb/modules/*/module.prop 2>/dev/null
 }
 
-if [ "$KSU" = "true" ] && [ -z "$KSU_NEXT" ] && ! has_metamodule; then
+if [ "$KSU" = "true" ] && ! has_metamodule; then
     if [ -e /data/adb/ios_emoji_skip_metamodule_check ]; then
         ui_print "- No metamodule found; continuing because the skip file exists."
     else
         ui_print "- No metamodule found."
-        ui_print "- This KernelSU only mounts module files through a metamodule."
+        ui_print "- Most KernelSU builds mount module files only through a metamodule."
         ui_print "- Using a fork with built-in mounting? Create"
         ui_print "  /data/adb/ios_emoji_skip_metamodule_check and flash again."
         abort "! Install a metamodule (e.g. meta-overlayfs), then flash again."
