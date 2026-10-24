@@ -16,18 +16,28 @@ ui_print "*************************************"
 ui_print "*          iOS Emoji 26.4           *"
 ui_print "*************************************"
 
-# Official KernelSU 3.x and ReSukiSU only mount a module's /system files when a
-# metamodule (e.g. meta-overlayfs) is installed. Without one the system emoji
-# font is NOT replaced and only the Facebook/Messenger in-app copy will work.
-# KernelSU-Next and SukiSU-Ultra ship built-in mounting, so they set the same
-# KSU variable but may not need a metamodule: keep the message non-alarming.
-if [ "$KSU" = "true" ] || [ "$APATCH" = "true" ]; then
-    if [ ! -e /data/adb/metamodule ]; then
+# Official KernelSU 3.x (and forks that follow it, e.g. ReSukiSU) mount a
+# module's /system files only when a metamodule is installed. Without one this
+# module cannot replace the system emoji font, so refuse to install instead of
+# reporting a success that changes nothing.
+#  - Magisk and APatch are not affected (KSU is not "true" on them).
+#  - KernelSU-Next sets KSU_NEXT and ships built-in mounting: not affected.
+#  - A fork we cannot identify (e.g. SukiSU-Ultra) can skip this check by
+#    creating the file /data/adb/ios_emoji_skip_metamodule_check first.
+has_metamodule() {
+    [ -e /data/adb/metamodule ] && return 0
+    grep -qs '^metamodule=1' /data/adb/modules/*/module.prop 2>/dev/null
+}
+
+if [ "$KSU" = "true" ] && [ -z "$KSU_NEXT" ] && ! has_metamodule; then
+    if [ -e /data/adb/ios_emoji_skip_metamodule_check ]; then
+        ui_print "- No metamodule found; continuing because the skip file exists."
+    else
         ui_print "- No metamodule found."
-        ui_print "- On official KernelSU 3.x the system emoji will NOT change"
-        ui_print "  until you install one (e.g. meta-overlayfs) and reflash."
-        ui_print "- KernelSU-Next / SukiSU-Ultra have built-in mounting and may"
-        ui_print "  not need one."
+        ui_print "- This KernelSU only mounts module files through a metamodule."
+        ui_print "- Using a fork with built-in mounting? Create"
+        ui_print "  /data/adb/ios_emoji_skip_metamodule_check and flash again."
+        abort "! Install a metamodule (e.g. meta-overlayfs), then flash again."
     fi
 fi
 
