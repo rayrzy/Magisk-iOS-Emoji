@@ -16,14 +16,18 @@ ui_print "*************************************"
 ui_print "*          iOS Emoji 26.4           *"
 ui_print "*************************************"
 
-# KernelSU 3.x / APatch only mount /system files of modules when a metamodule
-# (e.g. meta-overlayfs) is installed. Without one, the system emoji font is
-# NOT replaced and only the Facebook/Messenger in-app copy will work.
+# Official KernelSU 3.x and ReSukiSU only mount a module's /system files when a
+# metamodule (e.g. meta-overlayfs) is installed. Without one the system emoji
+# font is NOT replaced and only the Facebook/Messenger in-app copy will work.
+# KernelSU-Next and SukiSU-Ultra ship built-in mounting, so they set the same
+# KSU variable but may not need a metamodule: keep the message non-alarming.
 if [ "$KSU" = "true" ] || [ "$APATCH" = "true" ]; then
     if [ ! -e /data/adb/metamodule ]; then
-        ui_print "! No metamodule detected."
-        ui_print "! Install a metamodule (e.g. meta-overlayfs), then reinstall"
-        ui_print "! this module, or the system emoji will stay unchanged."
+        ui_print "- No metamodule found."
+        ui_print "- On official KernelSU 3.x the system emoji will NOT change"
+        ui_print "  until you install one (e.g. meta-overlayfs) and reflash."
+        ui_print "- KernelSU-Next / SukiSU-Ultra have built-in mounting and may"
+        ui_print "  not need one."
     fi
 fi
 
