@@ -16,17 +16,21 @@ ui_print "*************************************"
 ui_print "*          iOS Emoji 26.4           *"
 ui_print "*************************************"
 
-# KernelSU 3.x and the forks that follow it (current KernelSU-Next, BakaSU /
-# ReSukiSU) mount a module's /system files only when a metamodule is
-# installed. Without one this module cannot replace the system emoji font, so
-# refuse to install instead of reporting a success that changes nothing.
+# KernelSU, KernelSU-Next, SukiSU-Ultra and BakaSU (ReSukiSU) mount a module's
+# /system files only through a metamodule: when none is installed their ksud has
+# no mount script to run, so nothing is mounted and this module cannot replace
+# the system emoji font. Refuse to install instead of reporting a success that
+# changes nothing.
 #  - Magisk and APatch are not affected (KSU is not "true" on them).
-#  - Forks or older builds with built-in mounting (e.g. SukiSU-Ultra, older
-#    KernelSU-Next) cannot be told apart from the script, so they can skip this
-#    check by creating /data/adb/ios_emoji_skip_metamodule_check first.
+#  - Older builds of some forks had built-in mounting. They cannot be told apart
+#    reliably, so they can skip this check by creating
+#    /data/adb/ios_emoji_skip_metamodule_check first.
+# has_metamodule mirrors ksud: the /data/adb/metamodule symlink points to an
+# existing directory, or any module.prop declares metamodule=1 / true.
 has_metamodule() {
     [ -e /data/adb/metamodule ] && return 0
-    grep -qs '^metamodule=1' /data/adb/modules/*/module.prop 2>/dev/null
+    grep -qsE '^metamodule[[:space:]]*=[[:space:]]*(1|[Tt][Rr][Uu][Ee])[[:space:]]*$' \
+        /data/adb/modules/*/module.prop 2>/dev/null
 }
 
 if [ "$KSU" = "true" ] && ! has_metamodule; then
@@ -35,7 +39,7 @@ if [ "$KSU" = "true" ] && ! has_metamodule; then
     else
         ui_print "- No metamodule found."
         ui_print "- Most KernelSU builds mount module files only through a metamodule."
-        ui_print "- Using a fork with built-in mounting? Create"
+        ui_print "- Using an older build with built-in mounting? Create"
         ui_print "  /data/adb/ios_emoji_skip_metamodule_check and flash again."
         abort "! Install a metamodule (e.g. meta-overlayfs), then flash again."
     fi
